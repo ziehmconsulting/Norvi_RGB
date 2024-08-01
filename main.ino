@@ -1,10 +1,11 @@
 /*H********************************************************************************************
-** FILENAME :        buttoncycler.ino
+** FILENAME :        main.ino
 ** Version  :        1.0.0
 ** DESCRIPTION :
 **       Activate LED based, and repeats based on arguments
 **       green onboard LED signals process-activity
 **       RGB_LED signals several state logics based on documentation
+**       The functionality is useable over the button at the top of the norvi agent one.
 ** PUBLIC FUNCTIONS :
 **      void getLED_Signal(string selection, int repetation, int delayDuration)
 **      void getGreenLED_Signal(int delayTime) 
