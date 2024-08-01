@@ -1,11 +1,46 @@
+/*H********************************************************************************************
+** FILENAME :        buttoncycler.ino
+** Version  :        1.0.1
+** DESCRIPTION :
+**       Activate LED based, and repeats based on arguments
+**       green onboard LED signals process-activity
+**       RGB_LED signals several state logics based on documentation
+** PUBLIC FUNCTIONS :
+**      void getLED_Signal(string selection, int repetation, int delayDuration)
+**      void getGreenLED_Signal(int delayTime) 
+**      void delayLED(int delayTime)
+**
+** NOTES :
+**      The naming of the prefixes of the variables and functions results from the variable type or
+**       the variable type of the return value.
+**       "c" stands for "char", an "s" for "short",
+**       "v" for "void", a "u" for "unsigned" and
+**       "x" for all non-standard types
+**
+** AUTHOR :            Tjark Ziehm        START DATE :    06 Juli 2024
+** Copyright&Licence:  Tjark Ziehm, 2024
+** Convention:         <major>.<minor>.<patch>
+** CHANGES :
+**            v.0.0.1 add and test functions to read&seperate the char elements in array Networktime
+**            v.1.0.0 add the converter and the concationation function to get as result integers
+**            v.1.1.0 seperate the code to implementable feature
+**
+*********************************************************************************************H*/
+
+
 // Simple demonstration on using an input device to trigger changes on your
 // NeoPixels. Wire a momentary push button to connect from ground to a
 // digital IO pin. When the button is pressed it will change to a new pixel
 // animation. Initial state has all pixels off -- press the button once to
-// start the first animation. As written, the button does not interrupt an
-// animation in-progress, it works only when idle.
+// start switching the colors.
+// Usage of the onboard green LED @ Pin 27 and the WS2812 RGB-LED @ Pin 25
+// Button Pin at the norvi agent one is 35
+
 #include "Wire.h"
+#include <string>
 #include <Adafruit_NeoPixel.h>
+#include <unordered_map>
+
 #ifdef __AVR__
 #include <avr/power.h>  // Required for 16 MHz Adafruit Trinket
 #endif
@@ -14,17 +49,17 @@
 // pull-up resistor so the switch pulls the pin to ground momentarily.
 // On a high -> low transition the button press logic will execute.
 #define BUTTON_PIN 35  // Button at the top of norvi agent 1 device
-
-#define PIXEL_PIN 25  // Digital IO pin connected to the NeoPixels for WS2812
+#define PIXEL_PIN 25   // Digital IO pin connected to the NeoPixels for WS2812
 #define LED_PIN 27
-
 #define PIXEL_COUNT 1  // Number of NeoPixels
+
+using namespace std;
 
 // Declare our NeoPixel strip object:
 Adafruit_NeoPixel strip(PIXEL_COUNT, PIXEL_PIN, NEO_GRB + NEO_KHZ800);
-// Argument 1 = Number of pixels in NeoPixel strip
-// Argument 2 = Arduino pin number (most are valid)
-// Argument 3 = Pixel type flags, add together as needed:
+//   Argument 1 = Number of pixels in NeoPixel strip
+//   Argument 2 = Arduino pin number (most are valid)
+//   Argument 3 = Pixel type flags, add together as needed:
 //   NEO_KHZ800  800 KHz bitstream (most NeoPixel products w/WS2812 LEDs)
 //   NEO_KHZ400  400 KHz (classic 'v1' (not v2) FLORA pixels, WS2811 drivers)
 //   NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
@@ -32,12 +67,14 @@ Adafruit_NeoPixel strip(PIXEL_COUNT, PIXEL_PIN, NEO_GRB + NEO_KHZ800);
 //   NEO_RGBW    Pixels are wired for RGBW bitstream (NeoPixel RGBW products)
 
 boolean oldState = HIGH;
-uint8_t mode = 0;  // Currently-active animation mode, 0-9
-uint8_t pixelActivationDelay = 50;
+
+std::unordered_map<std::string, int> color = {
+  { "red", 1 }, { "yellow", 2 }, { "white", 3 }, { "turquoise", 4 }, { "blue", 5 }, { "green", 6 }, { "off", 7 }, { "led", 8 }
+};
 
 void setup() {
   pinMode(BUTTON_PIN, INPUT_PULLUP);
-  pinMode(LED_PIN, OUTPUT); // green board led
+  pinMode(LED_PIN, OUTPUT);  // green board led
 
   strip.begin();  // Initialize NeoPixel strip object (REQUIRED)
   strip.show();   // Initialize all pixels to 'off'
@@ -55,58 +92,74 @@ void loop() {
     // Check if button is still low after debounce.
     newState = digitalRead(BUTTON_PIN);
 
-    if (newState == LOW) {       // Yes, still low
-      if (++mode > 5) mode = 0;  // Advance to next mode, wrap around after #4
-      switch (mode) {            // Start the new animation...
-        case 0:
-          wipeColor(strip.Color(0, 0, 0), pixelActivationDelay);  // Black/off
-          singleBlinkGreenLED();
-          break;
-        case 1:
-          wipeColor(strip.Color(255, 0, 0), pixelActivationDelay);  // Red
-          singleBlinkGreenLED();
-          break;
-        case 2:
-          wipeColor(strip.Color(255, 255, 0), pixelActivationDelay);  // Yellow
-          singleBlinkGreenLED();
-          break;
-        case 3:
-          wipeColor(strip.Color(0, 255, 0), pixelActivationDelay);  // Green
-          singleBlinkGreenLED();
-          break;
-        case 4:
-          wipeColor(strip.Color(255, 255, 255), pixelActivationDelay);  // White
-          singleBlinkGreenLED();
-          break;
-        case 5:
-          wipeColor(strip.Color(0, 0, 255), pixelActivationDelay);  // Blue
-          singleBlinkGreenLED();
-          break;
-      }
+    if (newState == LOW) {  // Yes, still low
+      //std::string x = "red";
+      getLED_Signal("led", 5, 1000);
+      //delay(1000);
+      //turnOffRGB();
     }
   }
 
   // Set the last-read button state to the old state.
   oldState = newState;
-  
 }
 
-// Fill strip pixels one after another with a color. Strip is NOT cleared
-// first; anything there will be covered pixel by pixel. Pass in color
-// (as a single 'packed' 32-bit value, which you can get by calling
-// strip.Color(red, green, blue) as shown in the loop() function above),
-// and a delay time (in milliseconds) between pixels.
-void wipeColor(uint32_t color, int wait) {
-  for (int i = 0; i < strip.numPixels(); i++) {  // For each pixel in strip...
-    strip.setPixelColor(i, color);               //  Set pixel's color (in RAM)
-    strip.show();                                //  Update strip to match
-    delay(wait);                                 //  Pause for a moment
+
+/**
+ * Use the green board LED or color RGB LED
+ * 
+ * @param selection of color options as string: red, green, blue, yellow, turquoise. white, off and led for green onboard led 
+ * @param repetation number of blink-signal repetations
+ * @param delayDuration duration of time between the signals
+ */
+void getLED_Signal(string selection, int repetation, int delayDuration) {
+  for (int i = 1; i <= repetation; i++) {
+    switch (color[selection]) {
+      case 1:
+        neopixelWrite(PIXEL_PIN, 255, 0, 0);  // red
+        delayLED(delayDuration);
+        break;
+      case 2:
+        neopixelWrite(PIXEL_PIN, 255, 255, 0);  // yellow
+        delayLED(delayDuration);
+        break;
+      case 3:
+        neopixelWrite(PIXEL_PIN, 255, 255, 255);  // white
+        delayLED(delayDuration);
+        break;
+      case 4:
+        neopixelWrite(PIXEL_PIN, 0, 255, 255);  // turquoise
+        delayLED(delayDuration);
+        break;
+      case 5:
+        neopixelWrite(PIXEL_PIN, 0, 0, 255);  // blue
+        delayLED(delayDuration);
+        break;
+      case 6:
+        neopixelWrite(PIXEL_PIN, 0, 255, 0);  // green
+        delayLED(delayDuration);
+        break;
+      case 7:
+        strip.show();  // Initialize all pixels to 'off'
+        break;
+      case 8:
+        getGreenLED_Signal(delayDuration);
+        break;
+    }
   }
 }
 
-void singleBlinkGreenLED() {
-  digitalWrite(LED_PIN, LOW); //on
-  delay(1000);
-  digitalWrite(LED_PIN, HIGH); //off
-  //neopixelWrite(RGB_BUILTIN, 0, RGB_BRIGHTNESS, 0);  // Green
+
+void getGreenLED_Signal(int delayTime) {
+  digitalWrite(LED_PIN, LOW);  //on
+  delay(delayTime);
+  digitalWrite(LED_PIN, HIGH);  //off
+  delay(delayTime);
+  //neopixelWrite(PIXEL_PIN , 0, RGB_BRIGHTNESS, 0);  // Green
+}
+
+void delayLED(int delayTime) {
+  delay(delayTime);
+  strip.show();  // Initialize all pixels to 'off'
+  delay(delayTime);
 }
