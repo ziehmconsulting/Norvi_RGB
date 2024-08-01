@@ -1,6 +1,6 @@
 /*H********************************************************************************************
 ** FILENAME :        buttoncycler.ino
-** Version  :        1.0.1
+** Version  :        1.0.0
 ** DESCRIPTION :
 **       Activate LED based, and repeats based on arguments
 **       green onboard LED signals process-activity
@@ -11,19 +11,12 @@
 **      void delayLED(int delayTime)
 **
 ** NOTES :
-**      The naming of the prefixes of the variables and functions results from the variable type or
-**       the variable type of the return value.
-**       "c" stands for "char", an "s" for "short",
-**       "v" for "void", a "u" for "unsigned" and
-**       "x" for all non-standard types
+** ToDos :
 **
 ** AUTHOR :            Tjark Ziehm        START DATE :    06 Juli 2024
 ** Copyright&Licence:  Tjark Ziehm, 2024
 ** Convention:         <major>.<minor>.<patch>
 ** CHANGES :
-**            v.0.0.1 add and test functions to read&seperate the char elements in array Networktime
-**            v.1.0.0 add the converter and the concationation function to get as result integers
-**            v.1.1.0 seperate the code to implementable feature
 **
 *********************************************************************************************H*/
 
